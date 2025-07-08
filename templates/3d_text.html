@@ -1,0 +1,117 @@
+{% extends "base.html" %} {% block content %}
+
+<script>
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(
+    75,
+    window.innerWidth / window.innerHeight,
+    0.1,
+    1000
+  );
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setClearColor(0xffffff);
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  document.body.appendChild(renderer.domElement);
+
+  // Add lights
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+  scene.add(ambientLight);
+
+  // Controls (let the user rotate the scene)
+  const controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.1;
+
+  // Declare main text mesh and dust arrays
+  let textMesh;
+  const dustMeshes = [];
+  const dustBasePositions = [];
+
+  // Load font and create all text meshes
+  const loader = new THREE.FontLoader();
+  loader.load(
+    "{{ url_for('static', filename='fonts/major_mono_regular.json') }}",
+    function (font) {
+      // Main big text
+      const mainGeometry = new THREE.TextGeometry("Mmakers", {
+        font: font,
+        size: 1,
+        height: 0.1,
+        curveSegments: 12,
+        bevelEnabled: true,
+        bevelThickness: 0.03,
+        bevelSize: 0.02,
+        bevelSegments: 5,
+      });
+      const mainMaterial = new THREE.MeshStandardMaterial({ color: 0x000000 });
+      textMesh = new THREE.Mesh(mainGeometry, mainMaterial);
+      mainGeometry.center();
+      scene.add(textMesh);
+
+      // Dust "M" geometry
+      const dustGeometry = new THREE.TextGeometry("M", {
+        font: font,
+        size: 0.1,
+        height: 0.02,
+        curveSegments: 8,
+      });
+      dustGeometry.center();
+
+      const dustMaterial = new THREE.MeshStandardMaterial({ color: 0x888888 });
+
+      // Create dust meshes
+      const dustCount = 100;
+      for (let i = 0; i < dustCount; i++) {
+        const dustMesh = new THREE.Mesh(dustGeometry, dustMaterial);
+
+        // Random position in a box around the origin
+        const pos = new THREE.Vector3(
+          (Math.random() - 0.5) * 20,
+          (Math.random() - 0.5) * 10,
+          (Math.random() - 0.5) * 20
+        );
+        dustMesh.position.copy(pos);
+        dustMesh.rotation.set(
+          Math.random() * Math.PI,
+          Math.random() * Math.PI,
+          Math.random() * Math.PI
+        );
+
+        scene.add(dustMesh);
+        dustMeshes.push(dustMesh);
+        dustBasePositions.push(pos);
+      }
+    }
+  );
+
+  camera.position.z = 5;
+
+  const clock = new THREE.Clock();
+
+  function animate() {
+    requestAnimationFrame(animate);
+
+    const time = clock.getElapsedTime();
+
+    if (textMesh) {
+      // Wiggle main text
+      textMesh.position.y = Math.sin(time) * 0.1;
+      textMesh.rotation.y = Math.sin(time * 0.5) * 0.2;
+      textMesh.rotation.x = Math.sin(time * 0.3) * 0.1;
+      textMesh.rotation.z = Math.sin(time * 0.3) * 0.1;
+    }
+
+    // Animate dust Ms: float up/down and rotate
+    dustMeshes.forEach((mesh, i) => {
+      mesh.position.y = dustBasePositions[i].y + Math.sin(time + i) * 0.1;
+      mesh.rotation.x += 0.001 + i * 0.0001;
+      mesh.rotation.y += 0.002 + i * 0.0002;
+    });
+
+    controls.update();
+    renderer.render(scene, camera);
+  }
+  animate();
+</script>
+
+{% endblock %}
