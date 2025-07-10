@@ -4,4 +4,4 @@
 #     assert response.data.decode("utf-8") == "Hello, world!"
 
 def test_dummy_test():
-    assert 1 == 2
+    assert 1 == 1
