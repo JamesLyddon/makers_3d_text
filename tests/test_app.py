@@ -3,5 +3,5 @@
 #     assert response.status_code == 200
 #     assert response.data.decode("utf-8") == "Hello, world!"
 
-def dummy_test():
+def test_dummy_test():
     assert 1 == 1
